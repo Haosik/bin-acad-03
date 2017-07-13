@@ -6,7 +6,7 @@ let bodyScrollTop = 0;
 //url1 //api.myjson.com/bins/152f9j
 //url2 152f9j.json
 class App {
-    constructor(url = '152f9j.json') {
+    constructor(url = '//api.myjson.com/bins/152f9j') {
         this.url = url;
         this.data = null;
         this.postsToRender = [];
@@ -27,11 +27,14 @@ class App {
             .then(data => {
                 // Put received posts array into App.data
                 this.data = [...data.data];
-                this.sortBy(this.data);
                 this.postsToRender = [...this.data];
                 this.postsTotal = this.data.length;
                 this.possibleTags = [];
-                this.getPossibleTags(this.data);
+                this.getPossibleTags(this.postsToRender);
+                this.currentActiveTags = [];
+                this.checkSavedActiveTags();
+                this.postsToRender.sort((a, b) => this.sortWithTags(a, b));
+
                 // Init application
                 this.renderPosts();
                 this.addSearchListener();
@@ -43,10 +46,24 @@ class App {
             });
     };
 
-    sortBy(arr) {
-        arr.sort((a, b) => {
-            return Date.parse(b.createdAt) - Date.parse(a.createdAt);
+    sortWithTags(a, b) {
+        let count = 0;
+
+        this.currentActiveTags.forEach((el, ind) => {
+            if ((a.tags.indexOf(el) >= 0) && (b.tags.indexOf(el) === -1)) {
+                count--;
+            } else if ((a.tags.indexOf(el) === -1) && (b.tags.indexOf(el) >= 0)) {
+                count++;
+            };
         });
+        if (count === 0) {
+            if (Date.parse(a.createdAt) > Date.parse(b.createdAt)) {
+                count--;
+            } else if (Date.parse(b.createdAt) > Date.parse(a.createdAt)) {
+                count++;
+            }
+        }
+        return count;
     };
 
     getPossibleTags(arr) {
@@ -62,11 +79,13 @@ class App {
     };
 
     checkSavedActiveTags() {
+        this.currentActiveTags = [];
         let tagsInStorage = localStorage.getItem('activeTags');
         if (tagsInStorage) {
-            for (let tag in this.possibleTags) {
+            for (let tag of this.possibleTags) {
                 if (tagsInStorage.indexOf(tag) >= 0) {
                     console.log(tag);
+                    this.currentActiveTags.push(tag);
                 }
             }
         }
@@ -81,7 +100,7 @@ class App {
 
             if (bodyScrollTop >= (listHeightWithoutOne - winHeight)) {
                 if (this.renderedPosts < this.postsToRender.length) {
-                    this.renderPosts(10, this.postsToRender);
+                    this.renderPosts();
                 }
 
             }
@@ -125,7 +144,7 @@ class App {
                     return;
                 }
                 this.renderScrollEnabled = true;
-                this.renderPosts(10, this.postsToRender);
+                this.renderPosts();
             } else if (this.postsToRender.length == 0) {
                 this.renderedPosts = 0;
                 this.postsToRender = [];
@@ -189,26 +208,43 @@ class App {
         listItem.appendChild(itemDate);
         listItem.appendChild(itemFigure);
 
-        let tagsList = document.createElement('div');
-        tagsList.classList.add('tags-list');
-        listItem.appendChild(tagsList);
+        if (item.tags) {
+            let tagsList = document.createElement('div');
+            tagsList.classList.add('tags-list');
+            listItem.appendChild(tagsList);
+
+            (item.tags).forEach((tag, ind) => {
+                let tagsLink = document.createElement('button');
+                tagsLink.classList.add('tags-link');
+                tagsLink.innerHTML = tag;
+
+                if ((this.currentActiveTags).indexOf(tag) >= 0) {
+                    tagsLink.classList.add('active');
+                }
+                tagsList.appendChild(tagsLink);
+                tagsLink.addEventListener("click", () => this.activeTagsHandler(tagsLink));
+            });
+        }
+        let closeBtn = document.createElement('button');
+        closeBtn.classList.add('close-btn');
+        closeBtn.innerHTML = "&#9762;";
+        closeBtn.title = "Hide this post";
+        listItem.appendChild(closeBtn);
+        closeBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.target.closest('.news-list__item').classList.add('js-hidden');
+        });
 
         this.newsListDom.appendChild(listItem);
-        (item.tags).map(tag => {
-            let tagsLink = document.createElement('button');
-            tagsLink.classList.add('tags-link');
-            tagsLink.innerHTML = tag;
-            tagsList.appendChild(tagsLink);
-        });
     };
 
     // Add and Delete active tags by clicking on them
     activeTagsHandler(element) {
         let clickedTagTxt = element.textContent;
         let clickedTagTLength = clickedTagTxt.length;
-        let getStorageItems = [];
+        // let getStorageItems = [];
         if (localStorage.getItem('activeTags')) {
-            getStorageItems = localStorage.getItem('activeTags');
+            let getStorageItems = localStorage.getItem('activeTags');
 
             if (getStorageItems === clickedTagTxt) {
                 localStorage.removeItem('activeTags');
@@ -219,12 +255,23 @@ class App {
                 let secondNewPart = currentTags.slice(clickedTagIndex + clickedTagTLength);
                 let newActiveTags = firstNewPart.concat(secondNewPart);
                 localStorage.setItem('activeTags', newActiveTags);
-            } else if (getStorageItems && getStorageItems.indexOf(clickedTagTxt) === -1) {
+            } else if (getStorageItems.indexOf(clickedTagTxt) === -1) {
                 localStorage.setItem('activeTags', getStorageItems + clickedTagTxt);
             }
         } else {
             localStorage.setItem('activeTags', clickedTagTxt);
-        }
+        };
+        this.checkSavedActiveTags();
+
+        while (this.newsListDom.firstChild) {
+            this.newsListDom.removeChild(this.newsListDom.firstChild);
+        };
+
+        this.postsToRender.sort((a, b) => this.sortWithTags(a, b));
+
+        this.renderedPosts = 0;
+        this.renderPosts(10, this.postsToRender);
+
     };
     renderPosts(number = 10, arr = this.postsToRender) {
         // Check if all available posts are already rendered
@@ -236,20 +283,12 @@ class App {
             number = (this.postsToRender.length - this.renderedPosts);
         };
         //Count number of posts needed to be rendered  and call function to do it
-        console.log((this.renderedPosts + number));
+        // console.log((this.renderedPosts + number));
+
         for (let i = this.renderedPosts; i < (this.renderedPosts + number); i++) {
             let item = arr[i];
             this.singlePostRender(item);
         };
-
-        this.renderedTags = document.querySelectorAll('.tags-link');
-        this.renderedTags.forEach((elem, ind) => {
-            elem.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.activeTagsHandler(e.target);
-            })
-        })
 
         // Increment App's rendered items counter
         this.renderedPosts += number;

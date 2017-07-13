@@ -38,12 +38,30 @@ input {
 }
 
 .news-list__item {
+    position: relative;
+    z-index: 1;
     padding: 15px;
     list-style: none;
     border-radius: 10px;
     margin-bottom: 15px;
     background-color: #fff;
     box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.close-btn {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    right: 10px;
+    font-size: 24px;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    background: none;
+}
+
+.close-btn:hover {
+    color: #fb1;
 }
 
 .js-hidden {
