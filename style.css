@@ -1,0 +1,81 @@
+/* Just a bit of styling :) */
+
+:root {
+    font-size: 10px;
+}
+
+body {
+    font-size: 1.6rem;
+    font-family: 'Ubuntu', sans-serif;
+    background-image: url("https://www.toptal.com/designers/subtlepatterns/patterns/cork-wallet.png");
+}
+
+input {
+    font-family: 'Ubuntu', sans-serif;
+}
+
+.container {
+    width: 1400px;
+    max-width: 95%;
+    margin-left: 5%;
+}
+
+.navigation {
+    text-align: center;
+}
+
+#search {
+    display: block;
+    margin: 0 auto;
+    max-width: 350px;
+    height: 40px;
+    padding: 0 15px;
+    font-size: 20px;
+    border: 2px solid #aaa;
+    border-radius: 10px;
+    outline: none;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.news-list__item {
+    padding: 15px;
+    list-style: none;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    background-color: #fff;
+    box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+}
+
+.js-hidden {
+    display: none;
+}
+
+.tags-item {
+    display: inline-block;
+    vertical-align: top;
+    margin-right: 5px;
+}
+
+.tags-link {
+    display: inline-block;
+    vertical-align: middle;
+    height: 100%;
+    padding: 5px 10px;
+    margin-right: 10px;
+    color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background-color: lightgray;
+    text-decoration: none;
+    transition: background-color 0.2s ease-in, color 0.2s ease-out;
+    outline: none;
+    cursor: pointer;
+}
+
+.tags-link:hover {
+    background-color: gray;
+}
+
+.tags-link.active {
+    background-color: #333;
+}
